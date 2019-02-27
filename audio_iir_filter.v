@@ -32,8 +32,8 @@ module iir_1st_order
 	input reset,
 	input [COUNT_BITS - 1 : 0] div,
 	input signed [COEFF_WIDTH - 1 : 0] A2, B1, B2,
-   input signed [DATA_WIDTH - 1 :0] in,
-   output [DATA_WIDTH - 1:0] out
+	input signed [DATA_WIDTH - 1 :0] in,
+	output [DATA_WIDTH - 1:0] out
 );
 
 	reg signed [DATA_WIDTH-1:0] x0,x1,y0;
@@ -104,8 +104,8 @@ module iir_2nd_order
 	input reset,
 	input [COUNT_BITS - 1 : 0] div,
 	input signed [COEFF_WIDTH - 1 : 0] A2, A3, B1, B2, B3,
-   input signed [DATA_WIDTH - 1 : 0] in,
-   output [DATA_WIDTH - 1 : 0] out
+	input signed [DATA_WIDTH - 1 : 0] in,
+	output [DATA_WIDTH - 1 : 0] out
 );
 
 	reg signed [DATA_WIDTH-1 : 0] x0,x1,x2;
