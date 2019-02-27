@@ -28,10 +28,10 @@ module genesis_lpf(
 	input clk,
 	input reset,
 	input [1:0] lpf_mode,
-   input signed [15:0] in,
-   output signed [15:0] out);
+	input signed [15:0] in,
+	output signed [15:0] out);
 	
-	reg [9:0] div = 504; //For genesis we'll sample at 53.69mhz/504 = 106528 Hz
+	reg [9:0] div = 559; //Filter coefficients calculated for 96000hz for now.
 	
 	//Coefficients computed with Octave/Matlab/Online filter calculators.
 	//or with scipy.signal.bessel or similar tools
@@ -40,41 +40,55 @@ module genesis_lpf(
 	reg signed [17:0] B1;
 	
 	wire signed [15:0] audio_post_lpf1;
+	wire signed [15:0] audio_post_lpf2;
 		
 	always @ (*) begin
 		case(lpf_mode[1:0])
 			2'b00 : begin //Model 1 Low Pass at 3.1khz with adjusted slope
-				A2 = -18'd27504;
-				B1 =  18'd10528;
-				B2 = -18'd5264;
+				A2 = -18'sd26893;
+				B1 =  18'sd10869;
+				B2 = -18'sd4994;
 			end
 			2'b01 : begin  //model 2 is measured around 3.96khz
-				A2 = -18'sd26328;
-				B1 =  18'sd12888;
-				B2 = -18'sd6440;
+				A2 = -18'sd25500;
+				B1 =  18'sd14536;
+				B2 = -18'sd7268;
 			end
-			2'b10  : begin  //8.5khz low pass as a "Minimal" filter.
-				A2 = -18'd19088;
-				B1 =  18'd6840;
-				B2 =  18'd6840;
+			2'b10  : begin  //"Minimal" filter. Less rolloff than genuine Genesis models
+				A2 = -18'sd18212;
+				B1 =  18'sd5278;
+				B2 =  18'sd5278;
 			end
 			default: begin //Space for a 4th filter. This filter is not used
-				A2 = -18'sd32768; 
+				A2 = -18'sd32767; 
 				B1 =  18'sd0; 
 				B2 =  18'sd0;
 			end
 		endcase
 	end
 	
-	iir_1st_order lpf6db(.clk(clk),
-								.reset(reset),
-								.div(div),
-								.A2(A2),
-								.B1(B1),
-								.B2(B2),
-								.in(in),
-								.out(audio_post_lpf1)); 
-	 
+	iir_1st_order lpf6db(	.clk(clk),
+							.reset(reset),
+							.div(div),
+							.A2(A2),
+							.B1(B1),
+							.B2(B2),
+							.in(in),
+							.out(audio_post_lpf1)); 
+							
+
+//Temporary Chebyshev low-pass at 23khz.  This is a waste of resources. So FIXME
+/*	iir_2nd_order lpf12db(	.clk(clk),
+							.reset(reset),
+							.div(div), //Divider for 96khz
+							.A2(18'sd887),
+							.A3(18'sd3989),
+							.B1(18'sd5135),
+							.B2(18'sd10269),
+							.B3(18'sd5135),
+							.in(in),
+							.out(audio_post_lpf1));
+*/
 	assign out = ( lpf_mode[1:0] == 2'b11 ) ? in : audio_post_lpf1;
 
 endmodule //genesis_lpf
@@ -84,19 +98,19 @@ endmodule //genesis_lpf
 module genesis_fm_lpf(
 	input clk,
 	input reset,
-   input signed [15:0] in,
-   output signed [15:0] out);
+	input signed [15:0] in,
+	output signed [15:0] out);
 
 	wire signed [15:0] middle;
 	 
-	iir_2nd_order fm2(.clk(clk),
-							.reset(reset),
-							.div(10'd504), //Divider for 106528hz
-							.A2(-18'sd24704),
-							.A3(18'sd10728),
-							.B1(18'sd1083),
-							.B2(18'sd1204),
-							.B3(18'sd121),
-							.in(in),
+	iir_2nd_order fm2(	.clk(clk),
+						.reset(reset),
+						.div(10'd559), //Divider for 96khz
+						.A2(-18'sd24130),
+						.A3(18'sd10324),
+						.B1(18'sd644),
+						.B2(18'sd1290),
+						.B3(18'sd644),
+						.in(in),
 						.out(out));
 endmodule //genesis_fm_lpf
